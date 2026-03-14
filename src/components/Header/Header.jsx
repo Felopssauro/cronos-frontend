@@ -12,7 +12,7 @@ const Header = ({ isAdmin, setIsAdmin, userRole, onLogOut }) => {
   const RoleIcon = roleInfo?.Icon
 
   return (
-    <header className='bg-[#1c1aa3c4] shadow-md'>
+    <header className='bg-[linear-gradient(200deg,#0f0c29_2%,#1c1aa3_50%,#150355_100%)] shadow-md'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
         <div className='flex justify-between items-center py-4'>
           <div className='flex items-center gap-3'>
@@ -39,7 +39,7 @@ const Header = ({ isAdmin, setIsAdmin, userRole, onLogOut }) => {
               </button>
             )}
 
-            {/* Botão painel admin (apenas quando não logado como aluno/prof) */}
+            {/* Botão painel admin (apenas quando não logado como aluno/prof)
             {!userRole && (
               <button
                 onClick={() => setIsAdmin(!isAdmin)}
@@ -47,7 +47,7 @@ const Header = ({ isAdmin, setIsAdmin, userRole, onLogOut }) => {
               >
                 {isAdmin ? 'Visualizar grade' : 'Login'}
               </button>
-            )}
+            )} */}
           </div>
         </div>
       </div>

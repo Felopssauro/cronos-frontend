@@ -191,14 +191,7 @@ const RoomRequestForm = ({ onClose, userRole }) => {
                                 {MOTIVOS.map(m => (
                                     <button key={m.value} type="button"
                                         onClick={() => set('motivo', m.value)}
-                                        className="flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border-2 text-center transition-all duration-150 text-xs font-semibold"
-                                        style={{
-                                            borderColor: form.motivo === m.value ? '#1c1aa3' : '#e5e7eb',
-                                            backgroundColor: form.motivo === m.value ? '#1c1aa308' : 'transparent',
-                                            color: form.motivo === m.value ? '#1c1aa3' : '#6b7280',
-                                            transform: form.motivo === m.value ? 'translateY(-1px)' : 'none',
-                                            boxShadow: form.motivo === m.value ? '0 4px 12px rgba(28,26,163,0.2)' : 'none',
-                                        }}>
+                                         className={`flex flex-col items-center gap-1 py-2.5 px-2 rounded-xl border-2 text-center transition-all duration-150 text-xs font-semibold ${form.motivo === m.value ? 'border-[#1c1aa3] bg-[#1c1aa3]/5 text-[#1c1aa3] -translate-y-px shadow-[0_4px_12px_rgba(28,26,163,0.2)]' : 'border-gray-200 bg-transparent text-gray-500 hover:border-[#1c1aa3] hover:bg-[#1c1aa3]/5 hover:text-[#1c1aa3] hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(28,26,163,0.2)]'}`}>
                                         <span className="text-base">{m.label.split(' ')[0]}</span>
                                         <span>{m.label.split(' ').slice(1).join(' ')}</span>
                                     </button>

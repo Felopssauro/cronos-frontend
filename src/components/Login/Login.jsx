@@ -48,8 +48,7 @@ const Login = ({ onLoginSuccess }) => {
     const CurrentIcon = roleConfig[activeRole].icon
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4"
-            style={{ background: 'linear-gradient(135deg, #0f0c29 0%, #1c1aa3 50%, #150355 100%)' }}>
+        <div className="min-h-screen bg-[linear-gradient(135deg,#0f0c29_0%,#1c1aa3_50%,#150355_100%)] flex items-center justify-center p-4">
 
             {/* Orbs decorativos */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -142,7 +141,7 @@ const Login = ({ onLoginSuccess }) => {
                                 placeholder="Senha"
                                 required
                                 autoComplete="current-password"
-                                className="w-full pl-11 pr-12 py-3 rounded-xl border border-gray-200 text-gray-800 text-sm bg-gray-50 focus:outline-none focus:ring-2 transition-all"
+                               className="w-full pl-11 pr-12 py-3 rounded-xl border border-gray-200 text-gray-800 text-sm bg-gray-50 focus:outline-none focus:ring-2 transition-all [&::-ms-reveal]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                                 onFocus={e => e.target.style.borderColor = roleConfig[activeRole].color}
                                 onBlur={e => e.target.style.borderColor = '#e5e7eb'}
                             />
