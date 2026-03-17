@@ -124,34 +124,32 @@ const AdminPainel = () => {
     // ── Handlers: Horários ──
     const handleSave = async (dados) => {
         try {
-            const payload = {
-                id_turma:            parseInt(dados.cursoId),
-                id_sala:             parseInt(dados.salaId),
-                matricula_prof:      dados.professor,
-                id_disciplina:       dados.disciplina,
-                dia:                 dados.diaSemana,
-                hora_inicio:         dados.horarioInicio,
-                hora_fim:            dados.horarioFim,
-                data_inicio_bimestre: new Date(dados.dataInicio).toISOString(),
-                data_fim_bimestre:    new Date(dados.dataFim).toISOString(),
-            }
             if (horarioEdit) {
-                await axios.patch(`http://localhost:3000/alocacoes/${horarioEdit.id}`, payload)
-                atualizarHorario(horarioEdit.id, payload)
+                await atualizarHorario(horarioEdit.id, dados)
             } else {
-                const res = await axios.post('http://localhost:3000/alocacoes', payload)
-                adicionarHorario(res.data)
+                await adicionarHorario(dados)
             }
-            alert('Salvo com sucesso!')
             setShowForm(false)
             setHorarioEdit(null)
         } catch (err) {
-            alert(`Erro: ${err.response?.data?.message || 'Erro ao conectar.'}`)
+            alert(`Erro: ${err.response?.data?.message || err.message || 'Erro ao conectar.'}`)
         }
     }
 
     const handleEdit   = (h) => { setHorarioEdit(h); setShowForm(true) }
     const handleCancel = ()  => { setShowForm(false); setHorarioEdit(null) }
+
+    const handleGoToCadastros = (tab) => {
+        sessionStorage.setItem('cadastrosTab', tab)
+        setShowForm(false)
+        setActiveTab('cadastros')
+    }
+
+    const handleReturnToHorarios = () => {
+        setActiveTab('horarios')
+        setShowForm(true)
+        setHorarioEdit(null)
+    }
 
     // ── Handlers: Solicitações ──
     const handleAprovar = (id) => {
@@ -251,6 +249,8 @@ const AdminPainel = () => {
                                 horarioEdit={horarioEdit}
                                 onSave={handleSave}
                                 onCancel={handleCancel}
+                                onGoToCadastros={handleGoToCadastros}
+                                restoreDraft={!horarioEdit}
                             />
                         )}
                         <ScheduleViiew isAdmin={true} />
@@ -443,7 +443,7 @@ const AdminPainel = () => {
 
                 {/* ════ ABA: CADASTROS ════ */}
                 {activeTab === 'cadastros' && (
-                    <DataManager />
+                    <DataManager onReturnToHorarios={handleReturnToHorarios} />
                 )}
             </div>
 

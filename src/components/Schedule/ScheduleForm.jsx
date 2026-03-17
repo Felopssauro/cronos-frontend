@@ -1,277 +1,311 @@
 import { useState, useEffect } from 'react'
 import { useSchedule } from './ScheduleContext'
-import { diasSemana } from '../../data/data'; 
+import { diasSemana } from '../../data/data'
+import {
+    ChevronLeft, Check, Plus, Clock, X, ArrowRight,
+    Calendar, Building2, BookOpen, GraduationCap, User, ExternalLink
+} from 'lucide-react'
 
-const ScheduleForm = ({ horarioEdit, onSave, onCancel }) => {
+const inp = "w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none focus:border-indigo-400 transition-all text-sm placeholder-gray-400"
+const lbl = "block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2"
 
-    const { 
-        cursos, salas, periodos, professores, disciplinas, 
-        adicionarPeriodo, adicionarProfessor, adicionarDisciplina, adicionarCurso, adicionarSala 
-    } = useSchedule();
+const STEPS = [
+    { id: 1, label: 'Período e horário', icon: Calendar },
+    { id: 2, label: 'Sala',              icon: Building2 },
+    { id: 3, label: 'Disciplina',        icon: BookOpen },
+    { id: 4, label: 'Professor',         icon: User },
+    { id: 5, label: 'Confirmação',       icon: Check },
+]
 
-    const [creationMode, setCreationMode] = useState(null);
+const ScheduleForm = ({ horarioEdit, onSave, onCancel, onGoToCadastros, restoreDraft }) => {
+    const { cursos, salas, periodos, professores, disciplinas } = useSchedule()
+    const [step, setStep] = useState(1)
+    const [form, setForm] = useState({
+        periodoId: '', dataInicio: '', dataFim: '',
+        diaSemana: '', horarioInicio: '', horarioFim: '',
+        salaId: '', disciplinaId: '', cursoId: '', professorId: '',
+    })
 
-    const [formData, setFormData] = useState({
-        cursoId: '', salaId: '', disciplinaId: '', professorId: '', periodoId: '',
-        diaSemana: '', horarioInicio: '', horarioFim: '', dataInicio: '', dataFim: ''
-    });
-
-    const [newItemData, setNewItemData] = useState({});
+    // Restaura rascunho ao voltar do Cadastros
+    useEffect(() => {
+        if (!restoreDraft || horarioEdit) return
+        const draft = sessionStorage.getItem('scheduleFormDraft')
+        const draftStep = sessionStorage.getItem('scheduleFormStep')
+        if (draft) {
+            try {
+                setForm(JSON.parse(draft))
+                if (draftStep) setStep(parseInt(draftStep))
+            } catch {}
+            sessionStorage.removeItem('scheduleFormDraft')
+            sessionStorage.removeItem('scheduleFormStep')
+        }
+    }, [restoreDraft])
 
     useEffect(() => {
         if (horarioEdit) {
-            const periodo = periodos.find(p => p.id === horarioEdit.periodoId);
-            setFormData({
-                ...horarioEdit,
-                cursoId: String(horarioEdit.cursoId || ''),
-                salaId: String(horarioEdit.salaId || ''),
-                periodoId: String(horarioEdit.periodoId || ''),
-                professorId: String(horarioEdit.professor?.id || horarioEdit.professorId || ''),
-                disciplinaId: String(horarioEdit.disciplina?.id || horarioEdit.disciplinaId || ''),
-                dataInicio: horarioEdit.dataInicio || periodo?.dataInicio || '',
-                dataFim: horarioEdit.dataFim || periodo?.dataFim || ''
-            });
+            const p = periodos.find(p => p.id === horarioEdit.periodoId)
+            setForm({
+                periodoId:     String(horarioEdit.periodoId || ''),
+                dataInicio:    horarioEdit.dataInicio   || p?.dataInicio || '',
+                dataFim:       horarioEdit.dataFim      || p?.dataFim    || '',
+                diaSemana:     horarioEdit.diaSemana    || '',
+                horarioInicio: horarioEdit.horarioInicio || '',
+                horarioFim:    horarioEdit.horarioFim   || '',
+                salaId:        String(horarioEdit.salaId        || ''),
+                disciplinaId:  String(horarioEdit.disciplinaId  || horarioEdit.disciplina?.id || ''),
+                cursoId:       String(horarioEdit.cursoId       || ''),
+                professorId:   String(horarioEdit.professorId   || horarioEdit.professor?.id  || ''),
+            })
         }
-    }, [horarioEdit, periodos]);
+    }, [horarioEdit, periodos])
 
-    const handleChange = (field, value) => {
-        if (value === 'novo') {
-            let mode = '';
-            if (field === 'periodoId') mode = 'periodo';
-            if (field === 'professorId') mode = 'professor';
-            if (field === 'disciplinaId') mode = 'disciplina';
-            if (field === 'cursoId') mode = 'curso';
-            if (field === 'salaId') mode = 'sala';
-            
-            setCreationMode(mode);
-            setNewItemData({});
-        } else {
-            setFormData({ ...formData, [field]: value });
-            
-            if (field === 'periodoId') {
-                const p = periodos.find(item => item.id === parseInt(value));
-                if (p) setFormData(prev => ({ ...prev, periodoId: value, dataInicio: p.dataInicio, dataFim: p.dataFim }));
-            }
-        }
-    };
+    const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-    const handleCreateItem = async (e) => {
-        e.preventDefault();
-        let newId = null;
-
-        if (creationMode === 'periodo') {
-            newId = await adicionarPeriodo({
-                ...newItemData,
-                dataInicio: new Date(newItemData.dataInicio).toISOString(),
-                dataFim: new Date(newItemData.dataFim).toISOString()
-            });
-        }
-        else if (creationMode === 'professor') newId = await adicionarProfessor(newItemData);
-        else if (creationMode === 'disciplina') newId = await adicionarDisciplina(newItemData);
-        else if (creationMode === 'curso') newId = await adicionarCurso(newItemData);
-        else if (creationMode === 'sala') newId = await adicionarSala(newItemData);
-
-        if (newId) {
-            alert(`${creationMode.toUpperCase()} criado com sucesso!`);
-            setFormData(prev => ({ ...prev, [creationMode + 'Id']: newId }));
-            setCreationMode(null);
-        }
-    };
-
-    const handleSubmitHorario = (e) => {
-        e.preventDefault();
-        
-        try {
-            if (formData.horarioInicio >= formData.horarioFim) {
-                alert("⚠️ O horário de término deve ser maior que o horário de início.");
-                return;
-            }
-
-            if (!formData.dataInicio || !formData.dataFim) {
-                alert("Por favor, preencha as datas de início e fim.");
-                return;
-            }
-
-            onSave({
-                cursoId: parseInt(formData.cursoId),
-                salaId: parseInt(formData.salaId),
-                professorId: parseInt(formData.professorId),
-                disciplinaId: parseInt(formData.disciplinaId),
-                periodoId: parseInt(formData.periodoId),
-                diaSemana: formData.diaSemana,
-                horarioInicio: formData.horarioInicio,
-                horarioFim: formData.horarioFim,
-                dataInicio: new Date(formData.dataInicio).toISOString(),
-                dataFim: new Date(formData.dataFim).toISOString()
-            });
-
-        } catch (error) {
-            console.error("Erro ao preparar dados:", error);
-            alert("Erro nos dados do formulário: " + error.message);
-        }
-    };
-
-    const inputClass = "px-4 py-2.5 border border-gray-300 rounded-lg w-full bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none";
-
-    if (creationMode) {
-        return (
-            <div className='bg-gray-50 p-8 rounded-lg mb-8 border border-green-200 shadow-sm'>
-                <h3 className='text-xl font-bold text-green-800 mb-6'>
-                    Novo Cadastro: {creationMode.toUpperCase()}
-                </h3>
-                <form onSubmit={handleCreateItem} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                    {creationMode === 'periodo' && (
-                        <>
-                            <input placeholder="Semestre (Ex: 2025.1)" className={inputClass} onChange={e => setNewItemData({...newItemData, semestre: e.target.value})} required />
-                            <input placeholder="Descrição (Ex: 1º Bimestre)" className={inputClass} onChange={e => setNewItemData({...newItemData, descricao: e.target.value})} required />
-                            <input type="date" className={inputClass} onChange={e => setNewItemData({...newItemData, dataInicio: e.target.value})} required />
-                            <input type="date" className={inputClass} onChange={e => setNewItemData({...newItemData, dataFim: e.target.value})} required />
-                        </>
-                    )}
-
-                    {creationMode === 'professor' && (
-                        <>
-                            <input placeholder="Nome" className={inputClass} onChange={e => setNewItemData({...newItemData, nomeProf: e.target.value})} required />
-                            <input placeholder="Email" className={inputClass} onChange={e => setNewItemData({...newItemData, emailProf: e.target.value})} required />
-                            <input placeholder="Matrícula" className={inputClass} onChange={e => setNewItemData({...newItemData, matriculaProf: e.target.value})} required />
-                        </>
-                    )}
-
-                    {creationMode === 'disciplina' && (
-                        <>
-                            <input placeholder="Nome Disciplina" className={inputClass} onChange={e => setNewItemData({...newItemData, nomeDisciplina: e.target.value})} required />
-                            <input placeholder="Código (Sigla)" className={inputClass} onChange={e => setNewItemData({...newItemData, matriculaDisciplina: e.target.value})} required />
-                        </>
-                    )}
-
-                    {creationMode === 'sala' && (
-                        <>
-                            <input placeholder="Nome Sala (Ex: Lab 01)" className={inputClass} onChange={e => setNewItemData({...newItemData, nomeSala: e.target.value})} required />
-                            <select className={inputClass} onChange={e => setNewItemData({...newItemData, tipoSala: e.target.value})} required>
-                                <option value="">Selecione Tipo...</option>
-                                <option value="sala">Sala de Aula</option>
-                                <option value="laboratorio">Laboratório</option>
-                            </select>
-                        </>
-                    )}
-
-                    {creationMode === 'curso' && (
-                        <>
-                            <input placeholder="Nome Curso" className={inputClass} onChange={e => setNewItemData({...newItemData, nomeCurso: e.target.value})} required />
-                            <input placeholder="Sigla" className={inputClass} onChange={e => setNewItemData({...newItemData, siglaCurso: e.target.value})} required />
-                            
-                            <div className='flex flex-col gap-2'>
-                                <label className='text-sm font-semibold text-gray-700'>Cor de Identificação</label>
-                                <div className="flex items-center gap-3">
-                                    <input 
-                                        type="color" 
-                                        className="h-10 w-20 border border-gray-300 rounded cursor-pointer p-1" 
-                                        onChange={e => setNewItemData({...newItemData, corCurso: e.target.value})} 
-                                        defaultValue="#000000"
-                                        required 
-                                    />
-                                    <span className="text-sm text-gray-500">Clique para escolher</span>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    <div className="col-span-full flex justify-end gap-2 mt-4">
-                        <button type="button" onClick={() => setCreationMode(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancelar</button>
-                        <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700">Salvar {creationMode}</button>
-                    </div>
-                </form>
-            </div>
-        );
+    const handlePeriodo = (id) => {
+        const p = periodos.find(p => p.id === parseInt(id))
+        setForm(f => ({ ...f, periodoId: id, dataInicio: p?.dataInicio || '', dataFim: p?.dataFim || '' }))
     }
 
+    // Salva rascunho e redireciona para Cadastros na aba correta
+    const handleGoTo = (tab) => {
+        sessionStorage.setItem('scheduleFormDraft', JSON.stringify(form))
+        sessionStorage.setItem('scheduleFormStep', String(step))
+        onGoToCadastros(tab)
+    }
+
+    const canNext = () => {
+        if (step === 1) return form.periodoId && form.diaSemana && form.horarioInicio && form.horarioFim && form.dataInicio && form.dataFim
+        if (step === 2) return form.salaId
+        if (step === 3) return form.disciplinaId && form.cursoId
+        if (step === 4) return form.professorId
+        return true
+    }
+
+    const handleSubmit = () => {
+        if (form.horarioInicio >= form.horarioFim) { alert('O horário de término deve ser maior que o de início.'); return }
+        onSave({
+            cursoId: parseInt(form.cursoId), salaId: parseInt(form.salaId),
+            professorId: parseInt(form.professorId), disciplinaId: parseInt(form.disciplinaId),
+            periodoId: parseInt(form.periodoId), diaSemana: form.diaSemana,
+            horarioInicio: form.horarioInicio, horarioFim: form.horarioFim,
+            dataInicio: new Date(form.dataInicio).toISOString(),
+            dataFim:    new Date(form.dataFim).toISOString(),
+        })
+    }
+
+    const getPeriodo    = () => periodos.find(p => p.id    === parseInt(form.periodoId))
+    const getSala       = () => salas.find(s => s.id       === parseInt(form.salaId))
+    const getDisciplina = () => disciplinas.find(d => d.id === parseInt(form.disciplinaId))
+    const getCurso      = () => cursos.find(c => c.id      === parseInt(form.cursoId))
+    const getProfessor  = () => professores.find(p => p.id === parseInt(form.professorId))
+    const cur = STEPS[step - 1]
+    const StepIcon = cur.icon
+
+    const CadastrarBtn = ({ label, tab }) => (
+        <button type="button" onClick={() => handleGoTo(tab)}
+            className="shrink-0 h-11 px-4 flex items-center gap-1.5 rounded-xl border border-gray-200 text-gray-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all text-xs font-semibold whitespace-nowrap">
+            <Plus size={12} />
+            {label}
+            <ExternalLink size={10} className="opacity-50 ml-0.5" />
+        </button>
+    )
+
+    const PreviewCard = ({ icon: Icon, title, subtitle }) => (
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-indigo-100 bg-indigo-50">
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center">
+                <Icon size={16} className="text-indigo-600" />
+            </div>
+            <div className="flex-1">
+                <p className="font-bold text-indigo-900 text-sm">{title}</p>
+                {subtitle && <p className="text-xs text-indigo-400 mt-0.5">{subtitle}</p>}
+            </div>
+            <Check size={15} className="text-indigo-500" />
+        </div>
+    )
+
     return (
-        <form onSubmit={handleSubmitHorario} className='bg-gray-50 p-8 rounded-lg mb-8 border border-gray-200 shadow-sm'>
-            <h3 className='text-xl font-bold text-gray-900 mb-6'>{horarioEdit ? 'Editar Horário' : 'Novo Horário'}</h3>
-            
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6'>
-                
-                {/* PERIODOS */}
-                <div className='lg:col-span-4 flex flex-col gap-2'>
-                    <label className='text-sm font-bold text-gray-700'>Período</label>
-                    <select className={inputClass} value={formData.periodoId} onChange={e => handleChange('periodoId', e.target.value)} required>
-                        <option value="">Selecione...</option>
-                        {periodos.map(p => <option key={p.id} value={p.id}>{p.semestre} - {p.descricao}</option>)}
-                        <option value="novo" className="font-bold text-blue-600">+ Criar novo período...</option>
-                    </select>
-                </div>
+        <div className="rounded-2xl overflow-hidden mb-8"
+            style={{ border: '1px solid #e5e7eb', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
 
-                {/* DATAS (EDITÁVEIS) */}
-                <div className='flex flex-col gap-2'>
-                    <label className='text-sm font-bold text-gray-700'>Data Início</label>
-                    <input type="date" className={inputClass} value={formData.dataInicio} onChange={e => setFormData({...formData, dataInicio: e.target.value})} required />
-                </div>
-                <div className='flex flex-col gap-2'>
-                    <label className='text-sm font-bold text-gray-700'>Data Fim</label>
-                    <input type="date" className={inputClass} value={formData.dataFim} onChange={e => setFormData({...formData, dataFim: e.target.value})} required />
-                </div>
-
-                {/* DROPDOWNS COM OPÇÃO DE CRIAR */}
-                {[
-                    { label: 'Curso', field: 'cursoId', list: cursos, nameKey: 'nome', gender: 'o' },
-                    { label: 'Sala', field: 'salaId', list: salas, nameKey: 'nome', gender: 'a' },
-                    { label: 'Disciplina', field: 'disciplinaId', list: disciplinas, nameKey: 'nome', gender: 'a' },
-                    { label: 'Professor', field: 'professorId', list: professores, nameKey: 'nome', gender: 'o' },
-                ].map((item) => (
-                    <div key={item.field} className='flex flex-col gap-2'>
-                        <label className='text-sm font-bold text-gray-700'>{item.label}</label>
-                        <select className={inputClass} value={formData[item.field]} onChange={e => handleChange(item.field, e.target.value)} required>
-                            <option value="">Selecione...</option>
-                            {item.list.map(i => <option key={i.id} value={i.id}>{i[item.nameKey]}</option>)}
-                            <option value="novo" className="font-bold text-blue-600">
-                                + Nov{item.gender} {item.label}
-                            </option>
-                        </select>
+            {/* Cabeçalho */}
+            <div className="px-8 py-6 flex items-center justify-between"
+                style={{ background: 'linear-gradient(135deg, #1c1aa3 0%, #150355 100%)' }}>
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center">
+                        <StepIcon size={18} className="text-white" />
                     </div>
-                ))}
-
-                {/* DIA DA SEMANA */}
-                <div className='flex flex-col gap-2'>
-                    <label className='text-sm font-bold text-gray-700'>Dia</label>
-                    <select className={inputClass} value={formData.diaSemana} onChange={e => setFormData({...formData, diaSemana: e.target.value})} required>
-                        <option value="">Selecione...</option>
-                        {diasSemana.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
+                    <div>
+                        <p className="text-blue-300/80 text-[10px] font-bold uppercase tracking-widest">
+                            {horarioEdit ? 'Editar Horário' : 'Novo Horário'} · Passo {step}/{STEPS.length}
+                        </p>
+                        <h3 className="text-white text-xl font-black leading-tight mt-0.5">{cur.label}</h3>
+                    </div>
                 </div>
-
-
-                <div className='flex flex-col gap-2'>
-                    <label className='text-sm font-bold text-gray-700'>Início</label>
-                    <input 
-                        type="time" 
-                        className={inputClass} 
-                        value={formData.horarioInicio} 
-                        onChange={e => setFormData({...formData, horarioInicio: e.target.value})} 
-                        required 
-                    />
+                <div className="flex items-center gap-4">
+                    <div className="flex gap-2">
+                        {STEPS.map(s => (
+                            <div key={s.id} className="rounded-full transition-all duration-300"
+                                style={{
+                                    width: step === s.id ? '22px' : '8px', height: '8px',
+                                    background: step > s.id ? 'rgba(255,255,255,0.85)' : step === s.id ? 'white' : 'rgba(255,255,255,0.2)',
+                                }} />
+                        ))}
+                    </div>
+                    <button onClick={onCancel}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all">
+                        <X size={15} />
+                    </button>
                 </div>
-                <div className='flex flex-col gap-2'>
-                    <label className='text-sm font-bold text-gray-700'>Fim</label>
-                    <input 
-                        type="time" 
-                        className={inputClass} 
-                        value={formData.horarioFim} 
-                        onChange={e => setFormData({...formData, horarioFim: e.target.value})} 
-                        required 
-                    />
-                </div>
-
             </div>
 
-            <div className='flex gap-4 justify-end'>
-                <button type='button' onClick={onCancel} className='px-6 py-2 border rounded-lg hover:bg-gray-50'>Cancelar</button>
-                <button type='submit' className='px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700'>
-                    {horarioEdit ? 'Atualizar Horário' : 'Salvar Horário'}
+            {/* Corpo */}
+            <div className="bg-white px-8 py-8 space-y-6">
+
+                {step === 1 && <>
+                    <div>
+                        <label className={lbl}>Período letivo</label>
+                        <div className="flex gap-2">
+                            <select className={inp} value={form.periodoId} onChange={e => handlePeriodo(e.target.value)}>
+                                <option value="">Selecione o período...</option>
+                                {periodos.map(p => <option key={p.id} value={p.id}>{p.semestre} — {p.descricao}</option>)}
+                            </select>
+                            <CadastrarBtn label="Cadastrar período" tab="periodos" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-5">
+                        <div><label className={lbl}>Data de início</label><input type="date" className={inp} value={form.dataInicio} onChange={e => set('dataInicio', e.target.value)} /></div>
+                        <div><label className={lbl}>Data de fim</label><input type="date" className={inp} value={form.dataFim} onChange={e => set('dataFim', e.target.value)} /></div>
+                    </div>
+                    <div>
+                        <label className={lbl}>Dia da semana</label>
+                        <div className="grid grid-cols-6 gap-2">
+                            {diasSemana.map(d => (
+                                <button key={d} type="button" onClick={() => set('diaSemana', d)}
+                                    className="py-3 rounded-xl text-xs font-bold border-2 transition-all"
+                                    style={form.diaSemana === d
+                                        ? { background: 'linear-gradient(135deg,#1c1aa3,#4f46e5)', color: 'white', borderColor: 'transparent', boxShadow: '0 4px 14px rgba(28,26,163,0.3)' }
+                                        : { borderColor: '#e5e7eb', color: '#9ca3af', background: 'white' }}>
+                                    {d.slice(0, 3)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-5">
+                        <div>
+                            <label className={lbl}><Clock size={11} className="inline mr-1 -mt-0.5" />Horário de início</label>
+                            <input type="time" className={inp} value={form.horarioInicio} onChange={e => set('horarioInicio', e.target.value)} />
+                        </div>
+                        <div>
+                            <label className={lbl}><Clock size={11} className="inline mr-1 -mt-0.5" />Horário de término</label>
+                            <input type="time" className={inp} value={form.horarioFim} onChange={e => set('horarioFim', e.target.value)} />
+                        </div>
+                    </div>
+                </>}
+
+                {step === 2 && <>
+                    <div>
+                        <label className={lbl}>Sala ou laboratório</label>
+                        <div className="flex gap-2">
+                            <select className={inp} value={form.salaId} onChange={e => set('salaId', e.target.value)}>
+                                <option value="">Selecione a sala...</option>
+                                {salas.map(s => <option key={s.id} value={s.id}>{s.nome} — {s.tipo}</option>)}
+                            </select>
+                            <CadastrarBtn label="Cadastrar sala" tab="salas" />
+                        </div>
+                    </div>
+                    {form.salaId && getSala() && <PreviewCard icon={Building2} title={getSala().nome} subtitle={getSala().tipo} />}
+                </>}
+
+                {step === 3 && <>
+                    <div>
+                        <label className={lbl}>Disciplina</label>
+                        <div className="flex gap-2">
+                            <select className={inp} value={form.disciplinaId} onChange={e => set('disciplinaId', e.target.value)}>
+                                <option value="">Selecione a disciplina...</option>
+                                {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+                            </select>
+                            <CadastrarBtn label="Cadastrar disciplina" tab="disciplinas" />
+                        </div>
+                    </div>
+                    <div>
+                        <label className={lbl}>Curso</label>
+                        <div className="flex gap-2">
+                            <select className={inp} value={form.cursoId} onChange={e => set('cursoId', e.target.value)}>
+                                <option value="">Selecione o curso...</option>
+                                {cursos.map(c => <option key={c.id} value={c.id}>{c.nome}{c.sigla ? ` (${c.sigla})` : ''}</option>)}
+                            </select>
+                            <CadastrarBtn label="Cadastrar curso" tab="cursos" />
+                        </div>
+                    </div>
+                    {form.cursoId && getCurso() && (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                            <div className="w-4 h-4 rounded-full shrink-0" style={{ background: getCurso().cor }} />
+                            <p className="text-sm font-semibold text-gray-700">{getCurso().nome}{getCurso().sigla && <span className="text-gray-400 font-normal"> ({getCurso().sigla})</span>}</p>
+                        </div>
+                    )}
+                </>}
+
+                {step === 4 && <>
+                    <div>
+                        <label className={lbl}>Professor responsável</label>
+                        <div className="flex gap-2">
+                            <select className={inp} value={form.professorId} onChange={e => set('professorId', e.target.value)}>
+                                <option value="">Selecione o professor...</option>
+                                {professores.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                            </select>
+                            <CadastrarBtn label="Cadastrar professor" tab="professores" />
+                        </div>
+                    </div>
+                    {form.professorId && getProfessor() && <PreviewCard icon={User} title={getProfessor().nome} subtitle={getProfessor().email} />}
+                </>}
+
+                {step === 5 && (
+                    <div>
+                        <p className="text-sm text-gray-500 mb-5">Revise os dados antes de salvar.</p>
+                        <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 overflow-hidden">
+                            {[
+                                { Icon: Calendar,      label: 'Período',    v: getPeriodo()?.semestre },
+                                { Icon: Clock,         label: 'Dia/Horário',v: `${form.diaSemana}, ${form.horarioInicio} – ${form.horarioFim}` },
+                                { Icon: Building2,     label: 'Sala',       v: getSala()?.nome },
+                                { Icon: BookOpen,      label: 'Disciplina', v: getDisciplina()?.nome },
+                                { Icon: GraduationCap, label: 'Curso',      v: getCurso() ? `${getCurso().nome}${getCurso().sigla ? ` (${getCurso().sigla})` : ''}` : '' },
+                                { Icon: User,          label: 'Professor',  v: getProfessor()?.nome },
+                            ].map(({ Icon, label, v }) => (
+                                <div key={label} className="flex items-center gap-4 px-5 py-4 bg-white hover:bg-gray-50 transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                                        <Icon size={14} className="text-gray-500" />
+                                    </div>
+                                    <span className="text-xs text-gray-400 w-20 shrink-0">{label}</span>
+                                    <span className="text-sm font-semibold text-gray-800 flex-1 truncate">{v || '—'}</span>
+                                    <Check size={13} className="text-green-500 shrink-0" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Rodapé */}
+            <div className="px-8 py-4 border-t border-gray-100 bg-gray-50/70 flex justify-between items-center">
+                <button type="button" onClick={() => step > 1 ? setStep(s => s - 1) : onCancel()}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-500 text-sm font-semibold hover:bg-gray-200 transition-colors">
+                    <ChevronLeft size={15} />{step === 1 ? 'Cancelar' : 'Voltar'}
                 </button>
+                {step < 5
+                    ? <button type="button" disabled={!canNext()} onClick={() => setStep(s => s + 1)}
+                        className="flex items-center gap-2 px-7 py-2.5 rounded-xl text-white text-sm font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        style={{ background: 'linear-gradient(135deg,#1c1aa3,#4f46e5)', boxShadow: canNext() ? '0 4px 16px rgba(28,26,163,0.28)' : 'none' }}>
+                        Continuar <ArrowRight size={15} />
+                      </button>
+                    : <button type="button" onClick={handleSubmit}
+                        className="flex items-center gap-2 px-7 py-2.5 rounded-xl text-white text-sm font-bold"
+                        style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)', boxShadow: '0 4px 16px rgba(22,163,74,0.25)' }}>
+                        <Check size={15} />{horarioEdit ? 'Atualizar Horário' : 'Salvar Horário'}
+                      </button>
+                }
             </div>
-        </form>
-    );
+        </div>
+    )
 }
 
 export default ScheduleForm
