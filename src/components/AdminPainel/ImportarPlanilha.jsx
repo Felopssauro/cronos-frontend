@@ -7,7 +7,7 @@ import {
     ChevronRight, Loader2, FileDown
 } from 'lucide-react'
 
-const API_URL = 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_BASE_URL
 
 const ABAS_CONFIG = {
     Professores: {
