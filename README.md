@@ -1,5 +1,23 @@
 # SCA UEPA (Frontend) - Sistema Cronos de Alocação
 
+<!--toc:start-->
+- [SCA UEPA (Frontend) - Sistema Cronos de Alocação](#sca-uepa-frontend-sistema-cronos-de-alocação)
+  - [Description](#description)
+  - [Languages](#languages)
+  - [English (en-us)](#english-en-us)
+    - [Dependencies](#dependencies)
+    - [Tools](#tools)
+    - [Initial setup](#initial-setup)
+    - [Essential commands](#essential-commands)
+      - [Running other commands inside containers](#running-other-commands-inside-containers)
+      - [Git](#git)
+      - [Docker and Docker Compose](#docker-and-docker-compose)
+        - [Building the environment](#building-the-environment)
+        - [Handling containers and images](#handling-containers-and-images)
+      - [Frontend](#frontend)
+  - [Portugês (pt-br)](#portugês-pt-br)
+<!--toc:end-->
+
 ## Description
 
 SCA UEPA is a web app built with NestJS + Prisma for the backend and React + Vite for the user interface. The goal is to provide a simple and effective way to manage the allocation of rooms in the State University of Pará.
