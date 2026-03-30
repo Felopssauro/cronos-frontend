@@ -1,7 +1,7 @@
-# SCA UEPA (Frontend) - Sistema Cronos de Alocação
+# SCA UEPA - Frontend
 
 <!--toc:start-->
-- [SCA UEPA (Frontend) - Sistema Cronos de Alocação](#sca-uepa-frontend-sistema-cronos-de-alocação)
+- [SCA UEPA - Frontend](#sca-uepa-frontend)
   - [Description](#description)
   - [Dependencies](#dependencies)
   - [Tools](#tools)
