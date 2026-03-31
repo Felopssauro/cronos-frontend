@@ -1,5 +1,4 @@
 # SCA UEPA - Frontend
-
 <!--toc:start-->
 - [SCA UEPA - Frontend](#sca-uepa-frontend)
   - [Description](#description)
@@ -14,7 +13,6 @@
       - [Handling containers and images](#handling-containers-and-images)
     - [Node.js](#nodejs)
 <!--toc:end-->
-
 ## Description
 
 SCA UEPA is a web app built with NestJS + Prisma for the backend and React + Vite for the user interface. The goal is to provide a simple and effective way to manage the allocation of rooms in the State University of Pará.
@@ -43,7 +41,7 @@ To run this project it is recommend you have the following dependencies installe
     - For local development, set this variable to: `http://localhost:3000`
 - Build the containers with docker compose:
   - For development:
-    - `docker compose up --build -d`
+    - `docker compose up`
 
 Now you have a complete setup for development with running containers.
 
@@ -51,14 +49,14 @@ You can access the development frontend at `http://localhost:5173`
 
 ## Essential commands
 
-All commands are explained assuming you are running them from the root directory `sca-frontend/`
+All commands are explained assuming you are running them from the root directory `sca-backend/`
 
 ### Running other commands inside containers
 
-It is important to run all `npm` and `npx prisma` commands inside the containers, because this is where all the installed dependencies will be.
+It is important to run all `npm` commands inside the containers, because this is where all the installed dependencies will be. The name of the service is defined on the docker-compose file.
 
-- format: `docker compose -f <docker-compose.name.yml> exec npm run lint`
-  - e.g.: `docker compose -f docker-compose.dev.yml exec npm run lint`
+- format: `docker compose exec <service> <command>`
+  - e.g.: `docker compose exec frontend npm run lint`
 
 ### Git
 
@@ -68,18 +66,19 @@ It is important to run all `npm` and `npx prisma` commands inside the containers
 
 ### Docker and Docker Compose
 
-When running commands using docker compose, you will have to use `-f` flag to select the specific compose file you will be using on the command. You will to add this every time you run a docker compose command.
-
 #### Building the environment
 
 - For development:
-  - `docker compose up --build -d`
+  - `docker compose up` --> For the first time you cloned the repo.
+  - `docker compose up --build` --> If you made changes that require the docker images to be rebuilt.
 
 #### Handling containers and images
 
-- `docker compose exec`: executes commands inside the container.
+- `docker compose exec <service> <command>`: executes commands inside the container.
 - `docker compose stop`: stop containers built with compose file.
-- `docker compose up`: start containers built with compose file.
+- `docker compose up -d`: build images and start containers built on detached mode.
+- `docker compose up --build -d`: rebuild images and start containers on detached mode.
+- `docker compose start`: start containers built with compose file.
 - `docker compose rm -f`: force removes stopped containers built with compose file.
 - `docker compose down -v`: removes the containers and
 networks for that compose file and deletes named volumes.
